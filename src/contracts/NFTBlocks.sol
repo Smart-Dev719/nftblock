@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.21 <0.8.0;
+pragma solidity ^0.8.10;
 pragma abicoder v2;
 
 // import ERC721 iterface
 import "./ERC721.sol";
 
-// CryptoBoys smart contract inherits ERC721 interface
-contract CryptoBoys is ERC721 {
+// NFTBlocks smart contract inherits ERC721 interface
+contract NFTBlocks is ERC721 {
 
   // this contract's token collection name
   string public collectionName;
   // this contract's token symbol
   string public collectionNameSymbol;
-  // total number of crypto boys minted
-  uint256 public cryptoBoyCounter;
+  // total number of nft blocks minted
+  uint256 public nftBlockCounter;
 
-  // define crypto boy struct
-   struct CryptoBoy {
+  // define nft block struct
+   struct NFTBlock {
     uint256 tokenId;
     string tokenName;
     string tokenURI;
@@ -28,8 +28,8 @@ contract CryptoBoys is ERC721 {
     bool forSale;
   }
 
-  // map cryptoboy's token id to crypto boy
-  mapping(uint256 => CryptoBoy) public allCryptoBoys;
+  // map nftblock's token id to nft block
+  mapping(uint256 => NFTBlock) public allNFTBlocks;
   // check if token name exists
   mapping(string => bool) public tokenNameExists;
   // check if color exists
@@ -38,19 +38,19 @@ contract CryptoBoys is ERC721 {
   mapping(string => bool) public tokenURIExists;
 
   // initialize contract while deployment with contract's collection name and token
-  constructor() ERC721("Crypto Boys Collection", "CB") {
+  constructor() ERC721("NFT Blocks Collection", "NB") {
     collectionName = name();
     collectionNameSymbol = symbol();
   }
 
-  // mint a new crypto boy
-  function mintCryptoBoy(string memory _name, string memory _tokenURI, uint256 _price, string[] calldata _colors) external {
+  // mint a new nft block
+  function mintNFTBlock(string memory _name, string memory _tokenURI, uint256 _price, string[] calldata _colors) external {
     // check if thic fucntion caller is not an zero address account
     require(msg.sender != address(0));
     // increment counter
-    cryptoBoyCounter ++;
+    nftBlockCounter ++;
     // check if a token exists with the above token id => incremented counter
-    require(!_exists(cryptoBoyCounter));
+    require(!_exists(nftBlockCounter));
 
     // loop through the colors passed and check if each colors already exists or not
     for(uint i=0; i<_colors.length; i++) {
@@ -62,9 +62,9 @@ contract CryptoBoys is ERC721 {
     require(!tokenNameExists[_name]);
 
     // mint the token
-    _mint(msg.sender, cryptoBoyCounter);
+    _mint(msg.sender, nftBlockCounter);
     // set token URI (bind token id with the passed in token URI)
-    _setTokenURI(cryptoBoyCounter, _tokenURI);
+    _setTokenURI(nftBlockCounter, _tokenURI);
 
     // loop through the colors passed and make each of the colors as exists since the token is already minted
     for (uint i=0; i<_colors.length; i++) {
@@ -75,20 +75,20 @@ contract CryptoBoys is ERC721 {
     // make token name passed as exists
     tokenNameExists[_name] = true;
 
-    // creat a new crypto boy (struct) and pass in new values
-    CryptoBoy memory newCryptoBoy = CryptoBoy(
-      cryptoBoyCounter,
+    // creat a new nft block (struct) and pass in new values
+    NFTBlock memory newNFTBlock = NFTBlock(
+      nftBlockCounter,
       _name,
       _tokenURI,
-      msg.sender,
-      msg.sender,
-      address(0),
+      payable (msg.sender),
+      payable (msg.sender),
+      payable(address(0)),
       _price,
       0,
       true
     );
-    // add the token id and it's crypto boy to all crypto boys mapping
-    allCryptoBoys[cryptoBoyCounter] = newCryptoBoy;
+    // add the token id and it's nft block to all nft blocks mapping
+    allNFTBlocks[nftBlockCounter] = newNFTBlock;
   }
 
   // get owner of the token
@@ -133,26 +133,26 @@ contract CryptoBoys is ERC721 {
     require(tokenOwner != address(0));
     // the one who wants to buy the token should not be the token's owner
     require(tokenOwner != msg.sender);
-    // get that token from all crypto boys mapping and create a memory of it defined as (struct => CryptoBoy)
-    CryptoBoy memory cryptoboy = allCryptoBoys[_tokenId];
+    // get that token from all nft blocks mapping and create a memory of it defined as (struct => NFTBlock)
+    NFTBlock memory nftblock = allNFTBlocks[_tokenId];
     // price sent in to buy should be equal to or more than the token's price
-    require(msg.value >= cryptoboy.price);
+    require(msg.value >= nftblock.price);
     // token should be for sale
-    require(cryptoboy.forSale);
+    require(nftblock.forSale);
     // transfer the token from owner to the caller of the function (buyer)
     _transfer(tokenOwner, msg.sender, _tokenId);
     // get owner of the token
-    address payable sendTo = cryptoboy.currentOwner;
+    address payable sendTo = nftblock.currentOwner;
     // send token's worth of ethers to the owner
     sendTo.transfer(msg.value);
     // update the token's previous owner
-    cryptoboy.previousOwner = cryptoboy.currentOwner;
+    nftblock.previousOwner = nftblock.currentOwner;
     // update the token's current owner
-    cryptoboy.currentOwner = msg.sender;
+    nftblock.currentOwner = payable (msg.sender);
     // update the how many times this token was transfered
-    cryptoboy.numberOfTransfers += 1;
+    nftblock.numberOfTransfers += 1;
     // set and update that token in the mapping
-    allCryptoBoys[_tokenId] = cryptoboy;
+    allNFTBlocks[_tokenId] = nftblock;
   }
 
   function changeTokenPrice(uint256 _tokenId, uint256 _newPrice) public {
@@ -164,12 +164,12 @@ contract CryptoBoys is ERC721 {
     address tokenOwner = ownerOf(_tokenId);
     // check that token's owner should be equal to the caller of the function
     require(tokenOwner == msg.sender);
-    // get that token from all crypto boys mapping and create a memory of it defined as (struct => CryptoBoy)
-    CryptoBoy memory cryptoboy = allCryptoBoys[_tokenId];
+    // get that token from all nft blocks mapping and create a memory of it defined as (struct => NFTBlock)
+    NFTBlock memory nftblock = allNFTBlocks[_tokenId];
     // update token's price with new price
-    cryptoboy.price = _newPrice;
+    nftblock.price = _newPrice;
     // set and update that token in the mapping
-    allCryptoBoys[_tokenId] = cryptoboy;
+    allNFTBlocks[_tokenId] = nftblock;
   }
 
   // switch between set for sale and set not for sale
@@ -182,15 +182,15 @@ contract CryptoBoys is ERC721 {
     address tokenOwner = ownerOf(_tokenId);
     // check that token's owner should be equal to the caller of the function
     require(tokenOwner == msg.sender);
-    // get that token from all crypto boys mapping and create a memory of it defined as (struct => CryptoBoy)
-    CryptoBoy memory cryptoboy = allCryptoBoys[_tokenId];
+    // get that token from all nft blocks mapping and create a memory of it defined as (struct => NFTBlock)
+    NFTBlock memory nftblock = allNFTBlocks[_tokenId];
     // if token's forSale is false make it true and vice versa
-    if(cryptoboy.forSale) {
-      cryptoboy.forSale = false;
+    if(nftblock.forSale) {
+      nftblock.forSale = false;
     } else {
-      cryptoboy.forSale = true;
+      nftblock.forSale = true;
     }
     // set and update that token in the mapping
-    allCryptoBoys[_tokenId] = cryptoboy;
+    allNFTBlocks[_tokenId] = nftblock;
   }
 }
